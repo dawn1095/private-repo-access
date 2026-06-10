@@ -4,6 +4,7 @@
 #!homepage=https://github.com/dawn1095/private-repo-access
 #!icon = https://github.com/fluidicon.png
 #!date = 2026-6-11
+#!tag=GitHub,Dawn1095
 
 [Argument]
 github_token = input,"",tag=GitHub Token,desc=填写 GitHub Personal Access Token，用于访问私有仓库 Raw 链接
