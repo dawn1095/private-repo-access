@@ -4,12 +4,11 @@
 #!icon = https://github.com/fluidicon.png
 #!date = 2026-6-11
 
-[General]
-github_token = ghp_你的Token
+[Argument]
+github_token = input,"",tag=GitHub Token,desc=填写 GitHub Personal Access Token，用于访问私有仓库 Raw 链接
 
 [MITM]
 hostname = raw.githubusercontent.com
 
 [Script]
-http-request https://raw\.githubusercontent\.com/.+ script-path=https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/github_auth.js, requires-body=false, timeout=10, tag=GitHub Private Repo Auth
-
+http-request https://raw\.githubusercontent\.com/.+ script-path=https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/github_auth.js, requires-body=false, timeout=10, tag=GitHub Private Repo Auth, argument=[{github_token}]
