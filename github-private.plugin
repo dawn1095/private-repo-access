@@ -1,11 +1,11 @@
 #!name = GitHub Private Repo Access
 #!desc = 自动为 GitHub 私有仓库 Raw 请求添加 Token 认证
 #!author = Dawn1095
-#!icon = https://github.githubassets.com/favicons/favicon.png
+#!icon = https://github.com/fluidicon.png
 #!version = 1.0
 
 [MITM]
 hostname = raw.githubusercontent.com
 
 [Script]
-http-request https://raw\.githubusercontent\.com/.+ script-path=⁨iCloud云盘⁩/Loon⁩/Scripts⁩/github_auth.js, requires-body=false, timeout=10, tag=GitHub Private Repo Auth
+http-request https://raw\.githubusercontent\.com/.+ script-path=https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/github_auth.js, requires-body=false, timeout=10, tag=GitHub Private Repo Auth
