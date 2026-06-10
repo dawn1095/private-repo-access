@@ -1,6 +1,7 @@
 #!name = GitHub Private Repo Access
 #!desc = 自动为 GitHub 私有仓库 Raw 请求添加 Token 认证
 #!author = Dawn1095
+#!homepage=https://github.com/dawn1095/private-repo-access
 #!icon = https://github.com/fluidicon.png
 #!date = 2026-6-11
 
