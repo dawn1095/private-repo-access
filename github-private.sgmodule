@@ -1,0 +1,13 @@
+#!name = GitHub Private Repo Access
+#!desc = 自动为 GitHub 私有仓库 Raw 请求添加 Token 认证
+#!author = Dawn1095
+#!homepage = https://github.com/dawn1095/private-repo-access
+#!icon = https://github.com/fluidicon.png
+#!date = 2026-07-06
+#!arguments = github_token:请填写 GitHub Personal Access Token,tag:GitHub Token,desc=用于访问私有仓库 Raw 链接
+
+[MITM]
+hostname = %APPEND% raw.githubusercontent.com
+
+[Script]
+http-request https://raw\.githubusercontent\.com/.+ script-path=https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/github_auth.js, requires-body=false, timeout=10, tag=GitHub Private Repo Auth, argument=github_token={{{github_token}}}
