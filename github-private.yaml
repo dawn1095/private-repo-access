@@ -1,0 +1,30 @@
+name: "GitHub Private Repo Access"
+description: "自动为 GitHub 私有仓库 Raw 请求添加 Token 认证"
+author: "Dawn1095"
+homepage: "https://github.com/dawn1095/private-repo-access"
+icon: "https://github.com/fluidicon.png"
+
+# 模块参数：Egern 依据此声明在模块设置页自动生成输入框，填写的值通过 ctx.env.GITHUB_TOKEN 传入脚本
+env_schema:
+  GITHUB_TOKEN:
+    name: "GitHub Token"
+    description: "GitHub Personal Access Token（需 repo 权限），用于访问私有仓库 Raw 链接"
+    default_value: "ghp_你的Token"
+
+# HTTPS 解密范围：仅解密 raw.githubusercontent.com，避免全局解密
+mitm:
+  hostnames:
+    includes:
+      - "raw.githubusercontent.com"
+
+scriptings:
+  - http_request:
+      name: "GitHub Private Repo Auth"
+      match: "^https://raw\\.githubusercontent\\.com/.+"
+      script_url: "https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/github_auth_egern.js"
+      # 只需改写请求头，无需读取请求体
+      body_required: false
+      timeout: 10
+      env:
+        # 默认占位值：用户未主动填写时不会写入 env，此处仅为键存在时的兜底
+        GITHUB_TOKEN: "ghp_你的Token"
