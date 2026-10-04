@@ -44,16 +44,28 @@ modules:
 ```
 
 3. 在模块设置页填写 **GitHub Token**（由 `env_schema` 自动生成输入框，脚本通过 `ctx.env.GITHUB_TOKEN` 读取）
-### Stash
+### Stash（双覆写：远程基础设施 + 本地 Token）
+
+Stash 覆写没有参数设置面板，`argument` 只能写在文件里；且覆写合并时数组只能前插、
+无法按元素修改。因此 Token 不能写进可订阅的公开文件，正确做法是拆成两个覆写：
 
 1. 开启 Stash 的 MitM，安装并**完全信任** CA 证书
-2. 在 **配置 → 覆写（Override）** 中点击 **+** 添加远程覆写链接：
+2. 在 **配置 → 覆写（Override）** 中添加远程覆写（基础设施，只含 `mitm` 与
+   `script-providers`，不含触发项与 Token，可放心订阅）：
 
 ```
 https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/github-private.stoverride
 ```
 
-3. 在覆写中启用后，编辑覆写文件里 `http.script.argument` 的 `github_token`，填入你的 GitHub Personal Access Token（保持 `ghp_你的Token` 占位符时脚本会弹窗提示未配置）
+3. 复制仓库中的 `github-private.token.stoverride.example` 为
+   `github-private.token.stoverride`（已被 `.gitignore` 排除，不会误提交），
+   把其中 `argument: ""` 改为 `argument: github_token=<你的 Token>`（需 `repo` 权限）；
+   仅此一份本机文件持有 Token
+4. 在 **配置 → 覆写** 中添加这个**本地文件**并启用（两键不重叠，启用顺序无关）。
+   本地 `http.script` 命中请求后，以同名 `name` 引用远程 `script-providers` 拉取
+   `github_auth.js` 执行，`$argument` 携带 Token；首次运行后脚本经 `$persistentStore`
+   自动持久化
+5. 未配置 Token 时脚本仅弹窗提示，不注入请求头
 
 ## 配置
 
@@ -62,7 +74,7 @@ https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/g
 | Loon | `github_token` | GitHub Personal Access Token（需 `repo` 权限） |
 | Surge | `github_token` | 同上 |
 | Egern | `GitHub Token` | 同上，脚本内对应 `ctx.env.GITHUB_TOKEN` |
-| Stash | `github_token`（覆写内 `argument`） | 同上 |
+| Stash | `github_token`（本地覆写内 `argument`，经 `$argument` 传入） | 同上，仅存设备本地，公开文件零 Token |
 
 ## Token 获取
 
@@ -75,7 +87,7 @@ https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/g
 
 - **Loon**：插件通过 `http-request` 脚本捕获对 `raw.githubusercontent.com` 的请求，执行 `github_auth.js` 时将 GitHub Token 注入请求头。
 - **Surge**：模块以 `http-request` 规则命中后执行同一份 `github_auth.js`，行为一致。
-- **Stash**：覆写文件（`github-private.stoverride`）声明 `http.mitm` 与 `http.script`（`type: request`），命中后由 `script-providers` 拉取同一份 `github_auth.js` 执行，脚本 API 与 Loon/Surge 兼容（`$argument` / `$request` / `$persistentStore` / `$done`）。
+- **Stash**：远程覆写声明 `http.mitm` 与 `script-providers`（无触发项、无 Token）；本地覆写声明 `http.script`（`type: request`，`argument` 携带 Token）。命中后以同名 `name` 拉取同一份 `github_auth.js` 执行，脚本 API 与 Loon/Surge 兼容（`$argument` / `$request` / `$persistentStore` / `$done`）；`$argument` 为空时回退读 `$persistentStore`，皆空则仅弹窗。
 - **Egern**：模块（`github-private.yaml`）声明 MitM 域名与 `http_request` 脚本，命中后执行 `github_auth_egern.js`，通过 `ctx.env.GITHUB_TOKEN` 取 Token、`ctx.storage` 持久化，并回传改写后的 `headers`。Egern 运行时为 `export default async (ctx)`，与 Loon/Surge 的 `$done` 脚本 API 不通用，故两份脚本并存。
 
 ## 文件
@@ -84,7 +96,8 @@ https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/g
 - `github-private.sgmodule` — Surge 模块配置
 - `github-private.yaml` — Egern 模块配置
 - `github_auth.js` — Loon / Surge / Stash 认证逻辑脚本
-- `github-private.stoverride` — Stash 覆写文件
+- `github-private.stoverride` — Stash 基础设施覆写（公开可订阅，无触发项、无 Token）
+- `github-private.token.stoverride.example` — Stash 本地 Token 覆写模板（复制填 Token，真实文件不提交）
 - `github_auth_egern.js` — Egern 认证逻辑脚本
 
 ## 作者

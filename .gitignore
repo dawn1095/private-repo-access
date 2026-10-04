@@ -1,0 +1,2 @@
+# Stash 本地 Token 覆写（含真实 Token，绝不提交）
+*.token.stoverride
