@@ -1,28 +1,41 @@
 name: 'GitHub Private Repo Access'
 desc: |-
-  自动为 GitHub 私有仓库 Raw 请求添加 Token 认证（基础设施覆写，不含触发项与 Token）。
+  自动为 GitHub 私有仓库 Raw 请求添加 Token 认证。
 
-  本文件可放心订阅：只含 mitm 与脚本本体，不含 http.script 触发项，
-  单独启用时不生效、不携带任何敏感信息。
-  生效需另加一个设备本地覆写声明触发项并携带 Token
-  （见仓库中的 github-private.token.stoverride.example）。
+  订阅本文件即可生效：含 mitm、脚本触发项与脚本本体，公开文件零 Token。
+  Token 只写 Stash 本机（见下方本地覆写注释）：$argument 为空时脚本回退
+  读取本机 $persistentStore，皆空则仅弹窗提示、不注入请求头。
   需在 Stash 中安装并完全信任 CA 证书，并开启 MitM，否则脚本不会触发。
 author: 'Dawn1095'
 homepage: 'https://github.com/dawn1095/private-repo-access'
 icon: 'https://github.com/fluidicon.png'
 category: 'GitHub'
 date: '2026-10-04'
-version: '1.1.0'
+version: '1.2.0'
 
 http:
   # 仅解密 raw.githubusercontent.com，避免全局解密
   mitm:
     - raw.githubusercontent.com
-  # 刻意不声明 http.script：Stash 覆写对数组采用前插合并，无法按元素修改；
-  # 触发项（含 argument）只能由设备本地的另一个覆写声明，
-  # Token 因此永远不会写入本公开文件。
+  script:
+    # 命中 raw.githubusercontent.com 的任意请求，注入 Authorization 头
+    - match: ^https://raw\.githubusercontent\.com/.+
+      name: 'GitHub Private Repo Auth'
+      type: request
+      # 仅改写请求头，无需读取请求体
+      require-body: false
+      timeout: 10
+      # Token 只写 Stash 本机，绝不写进本公开文件：另建一个本地覆写，内容：
+      #   http:
+      #     script:
+      #       - name: 'GitHub Private Repo Auth'
+      #         argument: github_token=<你的Token>
+      # 跨文件同名覆写合并 argument 后脚本的 $argument 即得 Token；首次运行后
+      # 脚本经 $persistentStore 自动持久化，后续本地覆写即使删除也可继续生效。
+      # 本公开文件的 argument 保持空字符串，绝不携带任何 Token。
+      argument: ""
 
-# 脚本本体：由本地覆写的 http.script 以同名 name 引用
+# 脚本本体：触发项以同名 name 引用（同一有效配置内闭环）
 script-providers:
   'GitHub Private Repo Auth':
     url: 'https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/github_auth.js'

@@ -7,9 +7,9 @@
 
 .stoverride：适用于iOS应用Stash
 
-Stash 约束：覆写无参数设置面板且数组只能前插，Token 不得写入可订阅的公开文件；
-本仓库 Stash 支持为双文件：公开的 github-private.stoverride（仅 mitm + script-providers）
-与设备本地的 github-private.token.stoverride（仅 http.script + argument，见 .example 模板，
-真实文件由 .gitignore 排除）。
+Stash 约束：覆写无参数设置面板，Token 不得写入可订阅的公开文件；
+本仓库 Stash 为单文件覆写 github-private.stoverride（mitm + http.script 触发项
++ script-providers，argument 为空零 Token）；Token 由用户在本机另建本地覆写，
+覆盖同名触发项的 argument 传入（$argument 为空时脚本回退读 $persistentStore）。
 
 特别注意：不要用错了文件格式。
