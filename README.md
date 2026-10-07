@@ -55,17 +55,20 @@ https://raw.githubusercontent.com/dawn1095/private-repo-access/refs/heads/main/g
 ```
 
 3. 另建一个 Stash **本地覆写**（如命名 `github-private-token.stoverride`，只存本机、
-   绝不上传），内容仅 4 行，把 Token（需 `repo` 权限）写在这里：
+   绝不上传），把 Token（需 `repo` 权限）写在同名触发项的 `argument` 里：
 
 ```yaml
 http:
   script:
-    - name: 'GitHub Private Repo Auth'
+    - match: ^https://raw\.githubusercontent\.com/.+
+      name: 'GitHub Private Repo Auth'
+      type: request
       argument: github_token=<你的 Token>
 ```
 
-4. 在 **配置 → 覆写** 中同时启用远程覆写与这个本地覆写。本地覆写按“简单类型直接覆盖”
-   合并同名触发项的 `argument`，脚本的 `$argument` 即得 Token；首次运行后脚本经
+4. 在 **配置 → 覆写** 中同时启用远程覆写与这个本地覆写。Stash 覆写对数组采用「前插」合并，
+   当前版本**不支持**修改数组中的特定元素，故本地覆写需给出完整触发项（含 `match` / `type`），
+   合并后该触发项排在最前、脚本的 `$argument` 即得 Token；首次运行后脚本经
    `$persistentStore` 自动持久化，后续本地覆写即使删除也可继续生效
 5. 未配置 Token（`$argument` 与 `$persistentStore` 皆空）时脚本仅弹窗提示，不注入请求头；
    此时检查 Stash 脚本日志应有 `GitHub Private Repo Auth` 的命中记录——若连日志都没有，
@@ -91,7 +94,7 @@ http:
 
 - **Loon**：插件通过 `http-request` 脚本捕获对 `raw.githubusercontent.com` 的请求，执行 `github_auth.js` 时将 GitHub Token 注入请求头。
 - **Surge**：模块以 `http-request` 规则命中后执行同一份 `github_auth.js`，行为一致。
-- **Stash**：覆写声明 `http.mitm` 与 `http.script`（`type: request`，`argument` 为空，零 Token），命中后由 `script-providers` 拉取同一份 `github_auth.js` 执行，脚本 API 与 Loon/Surge 兼容（`$argument` / `$request` / `$persistentStore` / `$done`）。Token 由本机另一个本地覆写覆盖同名触发项的 `argument` 传入；`$argument` 为空时回退读 `$persistentStore`，皆空则仅弹窗（此时脚本日志仍应有命中记录，否则请求未进 HTTP 引擎）。
+- **Stash**：覆写声明 `http.mitm` 与 `http.script`（`type: request`，`argument` 为空，零 Token），命中后由 `script-providers` 拉取同一份 `github_auth.js` 执行，脚本 API 与 Loon/Surge 兼容（`$argument` / `$request` / `$persistentStore` / `$done`）。Token 由本机另一个本地覆写为同名触发项补上带 Token 的 `argument` 传入（Stash 覆写对数组为「前插」合并，故本机覆写给出完整触发项）；`$argument` 为空时回退读 `$persistentStore`，皆空则仅弹窗（此时脚本日志仍应有命中记录，否则请求未进 HTTP 引擎）。
 - **Egern**：模块（`github-private.yaml`）声明 MitM 域名与 `http_request` 脚本，命中后执行 `github_auth_egern.js`，通过 `ctx.env.GITHUB_TOKEN` 取 Token、`ctx.storage` 持久化，并回传改写后的 `headers`。Egern 运行时为 `export default async (ctx)`，与 Loon/Surge 的 `$done` 脚本 API 不通用，故两份脚本并存。
 
 ## 文件
